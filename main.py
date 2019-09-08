@@ -1,198 +1,171 @@
-import sys, os, glob, time, pdb, cv2
+import sys, os, time, glob, time, pdb, cv2
 import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-import cv2
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+
+# import neccesary libraries for defining the optimizers
+import torch.optim as optim
+from torch.optim import lr_scheduler
+from torchvision import transforms
+
+from unet import UNet
+from datasets import DAE_dataset
+
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+print('device: ', device)
 
 def q(text = ''):
-    print(f'>{text}<')
+    print('> {}'.format(text))
     sys.exit()
 
-def degrade_quality(img):
-    h, w = img.shape[0], img.shape[1]
-    fx=np.random.randint(50,100)/100
-    fy=np.random.randint(50,100)/100
-    # print('fx, fy: ', fx, fy)
-    small = cv2.resize(img, (0,0), fx = fx, fy = fy) 
-    img = cv2.resize(small,(w,h))
-    return img
+models_dir = 'models'
+if not os.path.exists(models_dir):
+    os.mkdir(models_dir)
 
-data_dir = 'data'
-train_dir = os.path.join(data_dir, 'train')
-val_dir = os.path.join(data_dir, 'val')
+losses_dir = 'losses'
+if not os.path.exists(losses_dir):
+    os.mkdir(losses_dir)
 
-if not os.path.exists(data_dir):
-    os.mkdir(data_dir)
+def count_parameters(model):
+    num_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return num_parameters/1e6 # in terms of millions
 
-if not os.path.exists(train_dir):
-    os.mkdir(train_dir)
+def plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoch_loss, epoch):
+    fig = plt.figure(figsize=(16,16))
+    fig.suptitle('loss trends', fontsize=20)
+    ax1 = fig.add_subplot(221)
+    ax2 = fig.add_subplot(222)
+    ax3 = fig.add_subplot(223)
+    ax4 = fig.add_subplot(224)
 
-if not os.path.exists(val_dir):
-    os.mkdir(val_dir)
+    ax1.title.set_text('epoch train loss VS #epochs')
+    ax1.set_xlabel('#epochs')
+    ax1.set_ylabel('epoch train loss')
+    ax1.plot(train_epoch_loss)
+    
+    ax2.title.set_text('epoch val loss VS #epochs')
+    ax2.set_xlabel('#epochs')
+    ax2.set_ylabel('epoch val loss')
+    ax2.plot(val_epoch_loss)
+ 
+    ax3.title.set_text('batch train loss VS #batches')
+    ax3.set_xlabel('#batches')
+    ax3.set_ylabel('batch train loss')
+    ax3.plot(running_train_loss)
 
-img_train_dir = os.path.join(data_dir, 'train', 'imgs')
-noisy_train_dir = os.path.join(data_dir, 'train', 'noisy')
-debug_train_dir = os.path.join(data_dir, 'train', 'debug')
+    ax4.title.set_text('batch val loss VS #batches')
+    ax4.set_xlabel('#batches')
+    ax4.set_ylabel('batch val loss')
+    ax4.plot(running_val_loss)
+    
+    plt.savefig(os.path.join('losses','losses_{}.png'.format(str(epoch + 1).zfill(2))))
 
-img_val_dir = os.path.join(data_dir, 'val', 'imgs')
-noisy_val_dir = os.path.join(data_dir, 'val', 'noisy')
-debug_val_dir = os.path.join(data_dir, 'val', 'debug')
+transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor()])
+    
+train_dataset       = DAE_dataset(os.path.join('data', 'train'), transform = transform)
+val_dataset         = DAE_dataset(os.path.join('data', 'val'), transform = transform)
 
-dir_list = [img_train_dir, noisy_train_dir, debug_train_dir, img_val_dir, noisy_val_dir, debug_val_dir]
-for dir_path in dir_list:
-    if not os.path.exists(dir_path):
-        os.mkdir(dir_path)
+print('\nlen(train_dataset) : ', len(train_dataset))
+print('len(val_dataset)   : ', len(val_dataset))
 
-f = open("shitty_text.txt", encoding='utf-8', mode="r")
-text = f.read()
-f.close()
-lines_list = str.split(text, '\n')
-while '' in lines_list:
-    lines_list.remove('')
+batch_size = 8
 
-lines_word_list = [str.split(line) for line in lines_list]
-words_list = [planet for sublist in lines_word_list for planet in sublist] 
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = batch_size, shuffle = True)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = batch_size, shuffle = not True)
 
-print('len(words_list): ', len(words_list))
+print('\nlen(train_loader): {}  @bs={}'.format(len(train_loader), batch_size))
+print('len(val_loader)  : {}  @bs={}'.format(len(val_loader), batch_size))
 
-# random font style
-font_list = [cv2.FONT_HERSHEY_COMPLEX, 
-cv2.FONT_HERSHEY_COMPLEX_SMALL,
-cv2.FONT_HERSHEY_DUPLEX,
-cv2.FONT_HERSHEY_PLAIN,
-cv2.FONT_HERSHEY_SIMPLEX,
-cv2.FONT_HERSHEY_TRIPLEX,
-cv2.FONT_ITALIC] # cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, cv2.FONT_HERSHEY_SCRIPT_COMPLEX, cursive
+resume = not False
+if not resume:
+    print('\nfrom scratch')
+    model = UNet(n_classes = 1, depth = 3, padding = True).to(device)
+    train_epoch_loss = []
+    val_epoch_loss = []
+    running_train_loss = []
+    running_val_loss = []
+    epochs_till_now = 0
+else:
+    ckpt_path = os.path.join('models', 'model01.pth')
+    ckpt = torch.load(ckpt_path)
+    model = ckpt['model'].to(device)
+    print(f'\nckpt loaded: {ckpt_path}')
+    losses = ckpt['losses']
+    running_train_loss = losses['running_train_loss']
+    running_val_loss = losses['running_val_loss']
+    train_epoch_loss = losses['train_epoch_loss']
+    val_epoch_loss = losses['val_epoch_loss']
 
-h, w = 64*4, 256*4 # size of synthetic images
+    epochs_till_now = ckpt['epochs_till_now']
 
-word_count = 0
-num_imgs = 35000
-train_num = int(num_imgs*0.8) # training percent
-print('num_imgs : ', num_imgs)
-print('train_num: ', train_num)
+lr = 3e-5
+optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr = lr)
+loss_fn = nn.MSELoss()
 
-img_count = 1
-word_start_x = 5
-word_end_y = 5
-for i in tqdm(range(num_imgs)):
-    # make a blank image
-    img = np.ones((h, w), dtype = np.uint8)*255
+log_interval = 25
+epochs = 1
 
-    # set random parameters
-    font = font_list[np.random.randint(len(font_list))]
-    bottomLeftCornerOfText = (np.random.randint(word_start_x, int(img.shape[1]/3)), np.random.randint(int(img.shape[0]/2), int(img.shape[0]) - word_end_y))
-    fontColor              = np.random.randint(0,30)# (np.random.randint(0,30),np.random.randint(0,30),np.random.randint(0,30))
-    fontScale              = np.random.randint(2200,3000)/1000
-    lineType               = np.random.randint(1,3)
+###
+print('\nmodel has {} M parameters'.format(count_parameters(model)))
+print(f'loss_fn        : {loss_fn}')
+print(f'lr             : {lr}')
+print(f'epochs_till_now: {epochs_till_now}')
+print(f'epochs         : {epochs}')
+###
 
-    # text to be printed on the blank image
-    num_words = np.random.randint(1,8)
-    print_text = ''
-    for _ in range(num_words):
-        print_text += str.split(words_list[word_count])[0] + ' '
-        word_count += 1
-    print_text = print_text[:-1] # to get rif of the last space
+for epoch in range(epochs_till_now, epochs_till_now+epochs):
+    print('\n===== EPOCH {}/{} ====='.format(epochs_till_now + 1, epochs_till_now + epochs))    
+    print('\nTRAINING...')
+    epoch_train_start_time = time.time()
+    model.train()
+    for batch_idx, (imgs, noisy_imgs) in enumerate(train_loader):
+        batch_start_time = time.time()
+        imgs = imgs.to(device)
+#         print(imgs.shape)
+#         q()
+        noisy_imgs = noisy_imgs.to(device)
+        optimizer.zero_grad()
+        out = model(noisy_imgs)
+        loss = loss_fn(out, imgs)
+        running_train_loss.append(loss.item())
+        loss.backward()
+        optimizer.step()
+        if (batch_idx + 1)%log_interval == 0:
+            batch_time = time.time() - batch_start_time
+            m,s = divmod(batch_time, 60)
+            print('train loss @batch_idx {}/{}: {} in {} mins {} secs'.format(str(batch_idx+1).zfill(len(str(len(train_loader)))), len(train_loader), loss.item(), int(m), round(s, 2)))
+    
+    train_epoch_loss.append(np.array(running_train_loss).mean())
+    
+    epoch_train_time = time.time() - epoch_train_start_time
+    m,s = divmod(epoch_train_time, 60)
+    h,m = divmod(m, 60)
+    print('\nepoch train time: {} hrs {} mins {} secs'.format(int(h), int(m), int(s)))
 
-    # writing the text on the image
-    cv2.putText(img, print_text.upper(), bottomLeftCornerOfText, font, fontScale, fontColor, lineType)
-    noisy_img = img.copy()
-    #################################################
-    # add horizontal line at the bottom of the text
+    print('\nVALIDATION...')
+    epoch_val_start_time = time.time()
+    model.eval()
+    with torch.no_grad():
+        for batch_idx, (imgs, noisy_imgs) in enumerate(val_loader):
+            
+            imgs = imgs.to(device)
+            noisy_imgs = noisy_imgs.to(device)
+            out = model(noisy_imgs)
+            loss = loss_fn(out, imgs)
+            running_val_loss.append(loss.item())
 
-    black_coords = np.where(noisy_img == fontColor)
+            if (batch_idx + 1)%log_interval == 0:
+                print('val loss   @batch_idx {}/{}: {}'.format(str(batch_idx+1).zfill(len(str(len(val_loader)))), len(val_loader), loss.item()))
+    
+    val_epoch_loss.append(np.array(running_val_loss).mean())
 
-    ymin = np.min(black_coords[0])
-    ymax = np.max(black_coords[0])
-    xmin = np.min(black_coords[1])
-    xmax = np.max(black_coords[1])
+    epoch_val_time = time.time() - epoch_val_start_time
+    m,s = divmod(epoch_val_time, 60)
+    h,m = divmod(m, 60)
+    print('\nepoch val   time: {} hrs {} mins {} secs'.format(int(h), int(m), int(s)))
 
-    h_start_x = 0 #np.random.randint(0,xmin)
-    h_end_x   = np.random.randint(int(img.shape[1]*0.8), img.shape[1])
-    h_length = h_end_x - h_start_x + 1
-    num_h_lines = np.random.randint(10,30)
-    h_lines = []
-    h_start_temp = h_start_x
-    # print('num_h_lines: ', num_h_lines)
-
-    next_line = True
-    num_line = 0
-    while (next_line) and (num_line < num_h_lines):
-        if h_start_temp < h_end_x:
-            h_end_temp = np.random.randint(h_start_temp + 1, h_end_x + 1)
-            # print('h_end_temp  : ', h_end_temp)
-            if h_end_temp < h_end_x:
-                h_lines.append([h_start_temp, h_end_temp]) 
-                h_start_temp = h_end_temp + 1
-                num_line += 1
-            else:
-                h_lines.append([h_start_temp, h_end_x]) 
-                num_line += 1
-                next_line = False
-        else:
-            next_line = False
-
-    for h_line in h_lines:
-        col = np.random.choice(['black', 'white'], p = [0.65, 0.35])
-        if col == 'black':
-            x_points = list(range(h_line[0], h_line[1] + 1))
-            x_points_black_prob = np.random.choice([0,1], size = len(x_points), p = [0.2, 0.8])
-
-            for idx, x in enumerate(x_points):
-                if x_points_black_prob[idx]:
-                    noisy_img[ ymax - np.random.randint(4): ymax + np.random.randint(4), x] = np.random.randint(0,30)  
-
-    # adding vertical lines
-    vertical_bool = {'left': np.random.choice([0,1], p =[0.2, 0.8]), 'right': np.random.choice([0,1])} # [1 or 0, 1 or 0] whether to make vertical left line on left and right side of the image
-    for left_right, bool_ in vertical_bool.items():
-        if bool_:
-            if left_right == 'left':
-                v_start_x = np.random.randint(5, int(noisy_img.shape[1]*0.06))
-            else:
-                v_start_x = np.random.randint(int(noisy_img.shape[1]*0.95), noisy_img.shape[1] - 5)
-
-            v_start_y = np.random.randint(0, int(noisy_img.shape[0]*0.06))
-            v_end_y   = np.random.randint(int(noisy_img.shape[0]*0.95), noisy_img.shape[0])
-
-            y_points = list(range(v_start_y, v_end_y + 1))
-            y_points_black_prob = np.random.choice([0,1], size = len(y_points), p = [0.2, 0.8])
-
-            for idx, y in enumerate(y_points):
-                if y_points_black_prob[idx]:
-                    noisy_img[y, v_start_x - np.random.randint(4): v_start_x + np.random.randint(4)] = np.random.randint(0,30)  
-
-    # '''
-    # erode the image
-    kernel = np.ones((3,3),np.uint8)
-    erosion_iteration = np.random.randint(1,3)
-    dilate_iteration = np.random.randint(0,2)
-    img = cv2.erode(img,kernel,iterations = erosion_iteration)
-    noisy_img = cv2.erode(noisy_img,kernel,iterations = erosion_iteration)
-    img = cv2.dilate(img,kernel,iterations = dilate_iteration)
-    noisy_img = cv2.dilate(noisy_img,kernel,iterations = dilate_iteration)
-    # '''
-
-    img = degrade_quality(img)
-    noisy_img = degrade_quality(noisy_img)
-
-    debug_img = np.ones((2*h, w), dtype = np.uint8)*255
-    debug_img[0:h, :] = img
-    debug_img[h:2*h, :] = noisy_img
-    cv2.line(debug_img, (0, h), (debug_img.shape[1], h), 150, 5)
-
-    img       = cv2.resize(img,       (0,0), fx = 0.25, fy = 0.25)
-    noisy_img = cv2.resize(noisy_img, (0,0), fx = 0.25, fy = 0.25)
-    debug_img = cv2.resize(debug_img, (0,0), fx = 0.25, fy = 0.25)
-
-    if img_count <= train_num:            
-        cv2.imwrite(os.path.join(data_dir, 'train', 'imgs', '{}.jpg'.format(str(img_count).zfill(6))), img) 
-        cv2.imwrite(os.path.join(data_dir, 'train', 'noisy', '{}.jpg'.format(str(img_count).zfill(6))), noisy_img) 
-        cv2.imwrite(os.path.join(data_dir, 'train', 'debug', '{}.jpg'.format(str(img_count).zfill(6))), debug_img) 
-    else:
-        cv2.imwrite(os.path.join(data_dir, 'val', 'imgs', '{}.jpg'.format(str(img_count).zfill(6))), img) 
-        cv2.imwrite(os.path.join(data_dir, 'val', 'noisy', '{}.jpg'.format(str(img_count).zfill(6))), noisy_img) 
-        cv2.imwrite(os.path.join(data_dir, 'val', 'debug', '{}.jpg'.format(str(img_count).zfill(6))), debug_img) 
-
-    img_count += 1
+    plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoch_loss,  epoch)   
+    torch.save({'model': model, 'losses': {'running_train_loss': running_train_loss, 'running_val_loss': running_val_loss, 'train_epoch_loss': train_epoch_loss, 'val_epoch_loss': val_epoch_loss}, 'epochs_till_now': epoch+1}, os.path.join(models_dir, 'model{}.pth'.format(str(epoch + 1).zfill(2))))
