@@ -6,6 +6,8 @@ from tqdm import tqdm
 import cv2
 import matplotlib.pyplot as plt
 
+import config as cfg
+
 def q(text = ''):
     print(f'>{text}<')
     sys.exit()
@@ -24,9 +26,13 @@ def degrade_quality(img):
     img = cv2.resize(small,(w,h))
     return img
 
-data_dir = 'data'
-train_dir = os.path.join(data_dir, 'train')
-val_dir = os.path.join(data_dir, 'val')
+data_dir = cfg.data_dir
+train_dir = cfg.train_dir
+val_dir = cfg.val_dir
+
+imgs_dir = cfg.imgs_dir
+noisy_dir = cfg.noisy_dir
+debug_dir = cfg.debug_dir
 
 if not os.path.exists(data_dir):
     os.mkdir(data_dir)
@@ -37,20 +43,20 @@ if not os.path.exists(train_dir):
 if not os.path.exists(val_dir):
     os.mkdir(val_dir)
 
-img_train_dir = os.path.join(data_dir, 'train', 'imgs')
-noisy_train_dir = os.path.join(data_dir, 'train', 'noisy')
-debug_train_dir = os.path.join(data_dir, 'train', 'debug')
+img_train_dir = os.path.join(data_dir, train_dir, imgs_dir)
+noisy_train_dir = os.path.join(data_dir, train_dir, noisy_dir)
+debug_train_dir = os.path.join(data_dir, train_dir, debug_dir)
 
-img_val_dir = os.path.join(data_dir, 'val', 'imgs')
-noisy_val_dir = os.path.join(data_dir, 'val', 'noisy')
-debug_val_dir = os.path.join(data_dir, 'val', 'debug')
+img_val_dir = os.path.join(data_dir, val_dir, imgs_dir)
+noisy_val_dir = os.path.join(data_dir, val_dir, noisy_dir)
+debug_val_dir = os.path.join(data_dir, val_dir, debug_dir)
 
 dir_list = [img_train_dir, noisy_train_dir, debug_train_dir, img_val_dir, noisy_val_dir, debug_val_dir]
 for dir_path in dir_list:
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)
 
-f = open("shitty_text.txt", encoding='utf-8', mode="r")
+f = open(cfg.txt_file_dir, encoding='utf-8', mode="r")
 text = f.read()
 f.close()
 lines_list = str.split(text, '\n')
@@ -81,14 +87,16 @@ scale_h, scale_w = 4, 4
 h, w = syn_h*scale_h, syn_w*scale_w 
 
 word_count = 0
-num_imgs = 35000 # max number of synthetic images to be generated
-train_num = int(num_imgs*0.8) # training percent
-print('num_imgs : ', num_imgs)
+num_imgs = int(cfg.num_synthetic_imgs) # max number of synthetic images to be generated
+train_num = int(num_imgs*cfg.train_percentage) # training percent
+print('\nnum_imgs : ', num_imgs)
 print('train_num: ', train_num)
 
 img_count = 1
 word_start_x = 5 # min space left on the left side of the printed text
 word_end_y = 5   # min space left on the bottom side of the printed text
+
+print('\nsynthesizing image data...')
 for i in tqdm(range(num_imgs)):
     # make a blank image
     img = np.ones((h, w), dtype = np.uint8)*255
@@ -193,17 +201,17 @@ for i in tqdm(range(num_imgs)):
     debug_img[h:2*h, :] = noisy_img
     cv2.line(debug_img, (0, h), (debug_img.shape[1], h), 150, 5)
 
-    img       = cv2.resize(img,       (0,0), fx = 1/scale_w, fy = /scale_h)
-    noisy_img = cv2.resize(noisy_img, (0,0), fx = 1/scale_w, fy = /scale_h)
-    debug_img = cv2.resize(debug_img, (0,0), fx = 1/scale_w, fy = /scale_h)
+    img       = cv2.resize(img,       (0,0), fx = 1/scale_w, fy = 1/scale_h)
+    noisy_img = cv2.resize(noisy_img, (0,0), fx = 1/scale_w, fy = 1/scale_h)
+    debug_img = cv2.resize(debug_img, (0,0), fx = 1/scale_w, fy = 1/scale_h)
 
     if img_count <= train_num:            
-        cv2.imwrite(os.path.join(data_dir, 'train', 'imgs', '{}.jpg'.format(str(img_count).zfill(6))), img) 
-        cv2.imwrite(os.path.join(data_dir, 'train', 'noisy', '{}.jpg'.format(str(img_count).zfill(6))), noisy_img) 
-        cv2.imwrite(os.path.join(data_dir, 'train', 'debug', '{}.jpg'.format(str(img_count).zfill(6))), debug_img) 
+        cv2.imwrite(os.path.join(data_dir, train_dir, imgs_dir, '{}.jpg'.format(str(img_count).zfill(6))), img) 
+        cv2.imwrite(os.path.join(data_dir, train_dir, noisy_dir, '{}.jpg'.format(str(img_count).zfill(6))), noisy_img) 
+        cv2.imwrite(os.path.join(data_dir, train_dir, debug_dir, '{}.jpg'.format(str(img_count).zfill(6))), debug_img) 
     else:
-        cv2.imwrite(os.path.join(data_dir, 'val', 'imgs', '{}.jpg'.format(str(img_count).zfill(6))), img) 
-        cv2.imwrite(os.path.join(data_dir, 'val', 'noisy', '{}.jpg'.format(str(img_count).zfill(6))), noisy_img) 
-        cv2.imwrite(os.path.join(data_dir, 'val', 'debug', '{}.jpg'.format(str(img_count).zfill(6))), debug_img) 
+        cv2.imwrite(os.path.join(data_dir, val_dir, imgs_dir, '{}.jpg'.format(str(img_count).zfill(6))), img) 
+        cv2.imwrite(os.path.join(data_dir, val_dir, noisy_dir, '{}.jpg'.format(str(img_count).zfill(6))), noisy_img) 
+        cv2.imwrite(os.path.join(data_dir, val_dir, debug_dir, '{}.jpg'.format(str(img_count).zfill(6))), debug_img) 
 
     img_count += 1
