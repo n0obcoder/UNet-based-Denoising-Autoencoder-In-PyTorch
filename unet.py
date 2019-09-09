@@ -84,7 +84,7 @@ class UNetConvBlock(nn.Module):
 
         block.append(nn.Conv2d(out_size, out_size, kernel_size=3, padding=int(padding)))
         block.append(nn.ReLU())
-        block.append(nn.Dropout2d(p=0.15)) # editted
+        block.append(nn.Dropout2d(p=0.15)) # edited
         if batch_norm:
             block.append(nn.BatchNorm2d(out_size))
 
