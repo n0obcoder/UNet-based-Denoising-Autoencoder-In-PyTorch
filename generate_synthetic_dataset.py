@@ -34,14 +34,17 @@ imgs_dir = cfg.imgs_dir
 noisy_dir = cfg.noisy_dir
 debug_dir = cfg.debug_dir
 
+train_data_dir = os.path.join(data_dir, train_dir)
+val_data_dir = os.path.join(data_dir, val_dir)
+
 if not os.path.exists(data_dir):
     os.mkdir(data_dir)
 
-if not os.path.exists(train_dir):
-    os.mkdir(train_dir)
+if not os.path.exists(train_data_dir):
+    os.mkdir(train_data_dir)
 
-if not os.path.exists(val_dir):
-    os.mkdir(val_dir)
+if not os.path.exists(val_data_dir):
+    os.mkdir(val_data_dir)
 
 img_train_dir = os.path.join(data_dir, train_dir, imgs_dir)
 noisy_train_dir = os.path.join(data_dir, train_dir, noisy_dir)
