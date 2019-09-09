@@ -23,6 +23,8 @@ def q(text = ''):
     sys.exit()
 
 data_dir = cfg.data_dir
+train_dir = cfg.train_dir
+val_dir = cfg.val_dir
     
 models_dir = cfg.model_dir
 if not os.path.exists(models_dir):
@@ -68,13 +70,13 @@ def plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoc
 
 transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor()])
     
-train_dataset       = DAE_dataset(os.path.join(data_dir, 'train'), transform = transform)
-val_dataset         = DAE_dataset(os.path.join(data_dir, 'val'), transform = transform)
+train_dataset       = DAE_dataset(os.path.join(data_dir, train_dir), transform = transform)
+val_dataset         = DAE_dataset(os.path.join(data_dir, val_dir), transform = transform)
 
 print('\nlen(train_dataset) : ', len(train_dataset))
 print('len(val_dataset)   : ', len(val_dataset))
 
-batch_size = 8
+batch_size = cfg.batch_size
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = batch_size, shuffle = True)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = batch_size, shuffle = not True)
@@ -82,41 +84,44 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = batch_size, s
 print('\nlen(train_loader): {}  @bs={}'.format(len(train_loader), batch_size))
 print('len(val_loader)  : {}  @bs={}'.format(len(val_loader), batch_size))
 
-resume = not False
+# defining the model
+model = UNet(n_classes = 1, depth = 3, padding = True).to(device)
+
+resume = cfg.resume
 if not resume:
     print('\nfrom scratch')
-    model = UNet(n_classes = 1, depth = 3, padding = True).to(device)
     train_epoch_loss = []
     val_epoch_loss = []
     running_train_loss = []
     running_val_loss = []
     epochs_till_now = 0
 else:
-    ckpt_path = os.path.join('models', 'model01.pth')
+    ckpt_path = os.path.join(models_dir, cfg.ckpt)
     ckpt = torch.load(ckpt_path)
-    model = ckpt['model'].to(device)
     print(f'\nckpt loaded: {ckpt_path}')
+    model_state_dict = ckpt['model_state_dict']
+    model.load_state_dict(model_state_dict)
+    model.to(device)
     losses = ckpt['losses']
     running_train_loss = losses['running_train_loss']
     running_val_loss = losses['running_val_loss']
     train_epoch_loss = losses['train_epoch_loss']
     val_epoch_loss = losses['val_epoch_loss']
-
     epochs_till_now = ckpt['epochs_till_now']
 
-lr = 3e-5
+lr = cfg.lr
 optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr = lr)
 loss_fn = nn.MSELoss()
 
 log_interval = 25
-epochs = 1
+epochs = cfg.epochs
 
 ###
 print('\nmodel has {} M parameters'.format(count_parameters(model)))
-print(f'loss_fn        : {loss_fn}')
+print(f'\nloss_fn        : {loss_fn}')
 print(f'lr             : {lr}')
 print(f'epochs_till_now: {epochs_till_now}')
-print(f'epochs         : {epochs}')
+print(f'epochs from now: {epochs}')
 ###
 
 for epoch in range(epochs_till_now, epochs_till_now+epochs):
@@ -174,4 +179,11 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
     print('\nepoch val   time: {} hrs {} mins {} secs'.format(int(h), int(m), int(s)))
 
     plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoch_loss,  epoch)   
-    torch.save({'model_state_dict': model.state_dict(), 'losses': {'running_train_loss': running_train_loss, 'running_val_loss': running_val_loss, 'train_epoch_loss': train_epoch_loss, 'val_epoch_loss': val_epoch_loss}, 'epochs_till_now': epoch+1}, os.path.join(models_dir, 'model{}.pth'.format(str(epoch + 1).zfill(2))))
+    
+    torch.save({'model_state_dict': model.state_dict(), 
+                'losses': {'running_train_loss': running_train_loss, 
+                           'running_val_loss': running_val_loss, 
+                           'train_epoch_loss': train_epoch_loss, 
+                           'val_epoch_loss': val_epoch_loss}, 
+                'epochs_till_now': epoch+1}, 
+                os.path.join(models_dir, 'model{}.pth'.format(str(epoch + 1).zfill(2))))
