@@ -1,5 +1,7 @@
+import os
+
 # path to saving models
-model_dir = 'models'
+models_dir = 'models'
 
 # path to saving loss plots
 losses_dir = 'losses'
@@ -26,3 +28,8 @@ epochs = 2         # epochs to train for
 
 # batch size for train and val loaders
 batch_size = 16
+
+test = True # it saves the denoised images in the result dir
+test_dir = os.path.join(data_dir, val_dir, noisy_dir)
+res_dir = 'results'
+test_bs = 1
