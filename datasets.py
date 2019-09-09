@@ -6,7 +6,7 @@ class DAE_dataset(Dataset):
     def __init__(self, data_dir, transform = None):
         self.data_dir = data_dir
         self.transform = transform
-        self.imgs_data = self.get_data(os.path.join(self.data_dir, 'imgs'))
+        self.imgs_data       = self.get_data(os.path.join(self.data_dir, 'imgs'))
         self.noisy_imgs_data = self.get_data(os.path.join(self.data_dir, 'noisy'))
         
     def get_data(self, data_path):
@@ -16,22 +16,25 @@ class DAE_dataset(Dataset):
         return data
     
     def __getitem__(self, index):  
+        # read images in grayscale, then invert them
         img       = 255 - cv2.imread(self.imgs_data[index] ,0)
         noisy_img = 255 - cv2.imread(self.noisy_imgs_data[index] ,0)
     
-        img = np.pad(img, ((96, 96), (0,0)), constant_values=(0,0))    
-        noisy_img = np.pad(noisy_img, ((96, 96), (0,0)), constant_values=(0,0))    
+        # padding the images
+        # img = np.pad(img, ((96, 96), (0,0)), constant_values=(0,0))    
+        # noisy_img = np.pad(noisy_img, ((96, 96), (0,0)), constant_values=(0,0))    
     
         if self.transform is not None:            
             img = self.transform(img)             
             noisy_img = self.transform(noisy_img)  
+        
         return img, noisy_img
 
     def __len__(self):
         return len(self.imgs_data)
     
 class custom_test_dataset(Dataset):
-    def __init__(self, data_dir, transform = None, out_size = (256, 256)):
+    def __init__(self, data_dir, transform = None, out_size = (64, 256)):
         self.data_dir = data_dir
         self.transform = transform
         self.out_size = out_size
@@ -44,13 +47,16 @@ class custom_test_dataset(Dataset):
         return data
     
     def __getitem__(self, index):  
+        # read images in grayscale, then invert them
         img       = 255 - cv2.imread(self.imgs_data[index] ,0)
         
+        # aspect ratio of the image required to be fed into the model (height/width)
         out_ar = self.out_size[0]/self.out_size[1]
 
-        # aspect ratio is the padding criteria here 
+        # aspect ratio of the image read
         ar = img.shape[0]/img.shape[1] # heigth/width
         
+        # aspect ratio is the padding criteria here         
         if ar >= out_ar:
             # pad width
             pad = int(img.shape[0]/out_ar) - img.shape[1]
@@ -68,7 +74,7 @@ class custom_test_dataset(Dataset):
         
         if self.transform is not None:            
             img = self.transform(img)             
-        return img, img
+        return img
 
     def __len__(self):
         return len(self.imgs_data)
