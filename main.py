@@ -26,7 +26,7 @@ data_dir = cfg.data_dir
 train_dir = cfg.train_dir
 val_dir = cfg.val_dir
     
-models_dir = cfg.model_dir
+models_dir = cfg.models_dir
 if not os.path.exists(models_dir):
     os.mkdir(models_dir)
 
@@ -69,7 +69,8 @@ def plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoc
     plt.savefig(os.path.join(losses_dir,'losses_{}.png'.format(str(epoch + 1).zfill(2))))
 
 transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor()])
-    
+
+
 train_dataset       = DAE_dataset(os.path.join(data_dir, train_dir), transform = transform)
 val_dataset         = DAE_dataset(os.path.join(data_dir, val_dir), transform = transform)
 
@@ -88,6 +89,7 @@ print('len(val_loader)  : {}  @bs={}'.format(len(val_loader), batch_size))
 model = UNet(n_classes = 1, depth = 3, padding = True).to(device)
 
 resume = cfg.resume
+
 if not resume:
     print('\nfrom scratch')
     train_epoch_loss = []
@@ -136,19 +138,19 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
 
         optimizer.zero_grad()
         out = model(noisy_imgs)
-        
+
         loss = loss_fn(out, imgs)
         running_train_loss.append(loss.item())
         loss.backward()
         optimizer.step()
-        
+
         if (batch_idx + 1)%log_interval == 0:
             batch_time = time.time() - batch_start_time
             m,s = divmod(batch_time, 60)
             print('train loss @batch_idx {}/{}: {} in {} mins {} secs'.format(str(batch_idx+1).zfill(len(str(len(train_loader)))), len(train_loader), loss.item(), int(m), round(s, 2)))
-    
+
     train_epoch_loss.append(np.array(running_train_loss).mean())
-    
+
     epoch_train_time = time.time() - epoch_train_start_time
     m,s = divmod(epoch_train_time, 60)
     h,m = divmod(m, 60)
@@ -159,18 +161,18 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
     model.eval()
     with torch.no_grad():
         for batch_idx, (imgs, noisy_imgs) in enumerate(val_loader):
-            
+
             imgs = imgs.to(device)
             noisy_imgs = noisy_imgs.to(device)
-            
+
             out = model(noisy_imgs)
             loss = loss_fn(out, imgs)
-            
+
             running_val_loss.append(loss.item())
 
             if (batch_idx + 1)%log_interval == 0:
                 print('val loss   @batch_idx {}/{}: {}'.format(str(batch_idx+1).zfill(len(str(len(val_loader)))), len(val_loader), loss.item()))
-    
+
     val_epoch_loss.append(np.array(running_val_loss).mean())
 
     epoch_val_time = time.time() - epoch_val_start_time
@@ -179,7 +181,7 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
     print('\nepoch val   time: {} hrs {} mins {} secs'.format(int(h), int(m), int(s)))
 
     plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoch_loss,  epoch)   
-    
+
     torch.save({'model_state_dict': model.state_dict(), 
                 'losses': {'running_train_loss': running_train_loss, 
                            'running_val_loss': running_val_loss, 
