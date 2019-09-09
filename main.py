@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-plt.switch_backend('agg')
+plt.switch_backend('agg') # for servers not supporting display
 
 # import neccesary libraries for defining the optimizers
 import torch.optim as optim
@@ -13,6 +13,7 @@ from torchvision import transforms
 
 from unet import UNet
 from datasets import DAE_dataset
+import config as cfg
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 print('device: ', device)
@@ -21,11 +22,13 @@ def q(text = ''):
     print('> {}'.format(text))
     sys.exit()
 
-models_dir = 'models'
+data_dir = cfg.data_dir
+    
+models_dir = cfg.model_dir
 if not os.path.exists(models_dir):
     os.mkdir(models_dir)
 
-losses_dir = 'losses'
+losses_dir = cfg.losses_dir
 if not os.path.exists(losses_dir):
     os.mkdir(losses_dir)
 
@@ -61,12 +64,12 @@ def plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoc
     ax4.set_ylabel('batch val loss')
     ax4.plot(running_val_loss)
     
-    plt.savefig(os.path.join('losses','losses_{}.png'.format(str(epoch + 1).zfill(2))))
+    plt.savefig(os.path.join(losses_dir,'losses_{}.png'.format(str(epoch + 1).zfill(2))))
 
 transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor()])
     
-train_dataset       = DAE_dataset(os.path.join('data', 'train'), transform = transform)
-val_dataset         = DAE_dataset(os.path.join('data', 'val'), transform = transform)
+train_dataset       = DAE_dataset(os.path.join(data_dir, 'train'), transform = transform)
+val_dataset         = DAE_dataset(os.path.join(data_dir, 'val'), transform = transform)
 
 print('\nlen(train_dataset) : ', len(train_dataset))
 print('len(val_dataset)   : ', len(val_dataset))
@@ -124,15 +127,16 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
     for batch_idx, (imgs, noisy_imgs) in enumerate(train_loader):
         batch_start_time = time.time()
         imgs = imgs.to(device)
-#         print(imgs.shape)
-#         q()
         noisy_imgs = noisy_imgs.to(device)
+
         optimizer.zero_grad()
         out = model(noisy_imgs)
+        
         loss = loss_fn(out, imgs)
         running_train_loss.append(loss.item())
         loss.backward()
         optimizer.step()
+        
         if (batch_idx + 1)%log_interval == 0:
             batch_time = time.time() - batch_start_time
             m,s = divmod(batch_time, 60)
@@ -153,8 +157,10 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
             
             imgs = imgs.to(device)
             noisy_imgs = noisy_imgs.to(device)
+            
             out = model(noisy_imgs)
             loss = loss_fn(out, imgs)
+            
             running_val_loss.append(loss.item())
 
             if (batch_idx + 1)%log_interval == 0:
@@ -168,4 +174,4 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
     print('\nepoch val   time: {} hrs {} mins {} secs'.format(int(h), int(m), int(s)))
 
     plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoch_loss,  epoch)   
-    torch.save({'model': model, 'losses': {'running_train_loss': running_train_loss, 'running_val_loss': running_val_loss, 'train_epoch_loss': train_epoch_loss, 'val_epoch_loss': val_epoch_loss}, 'epochs_till_now': epoch+1}, os.path.join(models_dir, 'model{}.pth'.format(str(epoch + 1).zfill(2))))
+    torch.save({'model_state_dict': model.state_dict(), 'losses': {'running_train_loss': running_train_loss, 'running_val_loss': running_val_loss, 'train_epoch_loss': train_epoch_loss, 'val_epoch_loss': val_epoch_loss}, 'epochs_till_now': epoch+1}, os.path.join(models_dir, 'model{}.pth'.format(str(epoch + 1).zfill(2))))
