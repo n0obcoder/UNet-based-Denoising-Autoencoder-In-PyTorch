@@ -49,7 +49,7 @@ class custom_test_dataset(Dataset):
     def __getitem__(self, index):  
         # read images in grayscale, then invert them
         img       = 255 - cv2.imread(self.imgs_data[index] ,0)
-        
+
         # aspect ratio of the image required to be fed into the model (height/width)
         out_ar = self.out_size[0]/self.out_size[1]
 
@@ -63,14 +63,14 @@ class custom_test_dataset(Dataset):
             pad1 = int(pad/2)
             pad2 = int(img.shape[0]/out_ar) - img.shape[1] - pad1
             img = np.pad(img, ((0,0),(pad1, pad2)), constant_values=(0,0))
-            img = cv2.resize(img, self.out_size)
+            img = cv2.resize(img, (self.out_size[1], self.out_size[0]))
         else:
             # pad height
             pad = int(img.shape[1]*out_ar) - img.shape[0]
             pad1 = int(pad/2)
             pad2 = int(img.shape[1]*out_ar) - img.shape[0] - pad1
             img = np.pad(img, ((pad1, pad2), (0,0)), constant_values=(0,0))
-            img = cv2.resize(img, self.out_size)
+            img = cv2.resize(img, (self.out_size[1], self.out_size[0]))
         
         if self.transform is not None:            
             img = self.transform(img)             
