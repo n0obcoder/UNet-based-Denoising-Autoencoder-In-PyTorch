@@ -1,4 +1,4 @@
-# UNet-based-Denoising-Autoencoder
+# UNet-based-Denoising-Autoencoder-In-PyTorch
 Cleaning printed text using Denoising Autoencoder based on UNet architecture in PyTorch
 
 ## Requirements
@@ -21,6 +21,7 @@ Set the desired values of **lr**, **epochs** and **batch_size** in *config.py*
 * ### Start Training
   In *config.py*,
   * Set **resume** to False
+  
   ```
   python train.py
   ```
@@ -28,6 +29,7 @@ Set the desired values of **lr**, **epochs** and **batch_size** in *config.py*
   In *config.py*,
   * set **resume** to True and
   * set **ckpt** to the path of the model to be loaded, i.e. ckpt = 'model02.pth'
+  
   ```
   python train.py
   ```
