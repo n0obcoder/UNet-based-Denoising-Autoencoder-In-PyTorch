@@ -18,7 +18,7 @@ debug_dir = 'debug'
 txt_file_dir = 'shitty_text.txt'
 
 # maximun number of synthetic words to generate
-num_synthetic_imgs = 2000
+num_synthetic_imgs = 24000
 train_percentage = 0.8
 
 resume = True      # False for trainig from scratch, True for loading a previously saved weight
@@ -27,7 +27,7 @@ lr = 1e-5          # learning rate
 epochs = 2         # epochs to train for 
 
 # batch size for train and val loaders
-batch_size = 16
+batch_size = 64
 
 test = True # it saves the denoised images in the result dir
 test_dir = os.path.join(data_dir, val_dir, noisy_dir)
