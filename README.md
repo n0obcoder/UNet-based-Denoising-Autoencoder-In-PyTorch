@@ -2,11 +2,11 @@
 Cleaning printed text using Denoising Autoencoder based on UNet architecture in PyTorch
 
 ## Requirements
-* torch >= 0.4
-* opencv-python
-* numpy
-* matplotlib
-* tqdm
+* torch >= 0.4    
+* opencv-python    
+* numpy            
+* matplotlib       
+* tqdm             
 
 ## Generating Synthetic Data
 Set the number of total synthetic images to be generated **num_synthetic_imgs** and set the percentage of training data **train_percentage** in *config.py*
