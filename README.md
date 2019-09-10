@@ -37,8 +37,8 @@ python train.py
 ## Testing
 In *config.py*,
 * set **test** to True 
-* set **test_dir** which contains the noisy images that you need to denoise, and 
-* set **test_bs** which is the batch size for the test set.
+* set **test_dir** to the path that contains the noisy images that you need to denoise ('data/val/noisy' by default) 
+* set **test_bs** to the desired batch size for the test set (1 by default)
 ```
 python test.py
 ```
