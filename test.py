@@ -23,7 +23,7 @@ test_dir = cfg.test_dir
 test_dataset       = custom_test_dataset(test_dir, transform = transform)
 test_loader        = torch.utils.data.DataLoader(test_dataset, batch_size = cfg.test_bs, shuffle = not True)
 
-print('\nlen(test_dataset) : ', len(test_dataset))
+print('\nlen(test_dataset) : {}'.format(len(test_dataset)))
 print('len(test_loader)  : {}  @bs={}'.format(len(test_loader), cfg.test_bs))
 
 # defining the model
@@ -60,7 +60,8 @@ with torch.no_grad():
         noisy_imgs = noisy_imgs.to(device)
         out = model(noisy_imgs)
         denoised = denoise(noisy_imgs, out)
-        denoised =  denoised
         cv2.imwrite(os.path.join(res_dir, f'denoised{str(batch_idx).zfill(3)}.jpg'), denoised)
         
 print('\n\nresults saved in \'{}\' directory'.format(res_dir))
+
+print('\nFin.')
