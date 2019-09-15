@@ -22,12 +22,12 @@ num_synthetic_imgs = 18000
 train_percentage = 0.8
 
 resume = not True      # False for trainig from scratch, True for loading a previously saved weight
-ckpt='model12.pth' # model file path to load the weights from, only useful when resume is True
+ckpt='model08.pth' # model file path to load the weights from, only useful when resume is True
 lr = 3e-6          # learning rate
 epochs = 8         # epochs to train for 
 
 # batch size for train and val loaders
-batch_size = 64
+batch_size = 4
 
 test_dir = os.path.join(data_dir, val_dir, noisy_dir)
 res_dir = 'results'
