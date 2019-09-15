@@ -18,6 +18,8 @@ import config as cfg
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 print('device: ', device)
 
+script_time = time.time()
+
 def q(text = ''):
     print('> {}'.format(text))
     sys.exit()
@@ -69,7 +71,6 @@ def plot_losses(running_train_loss, running_val_loss, train_epoch_loss, val_epoc
     plt.savefig(os.path.join(losses_dir,'losses_{}.png'.format(str(epoch + 1).zfill(2))))
 
 transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor()])
-
 
 train_dataset       = DAE_dataset(os.path.join(data_dir, train_dir), transform = transform)
 val_dataset         = DAE_dataset(os.path.join(data_dir, val_dir), transform = transform)
@@ -127,7 +128,7 @@ print(f'epochs from now: {epochs}')
 ###
 
 for epoch in range(epochs_till_now, epochs_till_now+epochs):
-    print('\n===== EPOCH {}/{} ====='.format(epochs_till_now + 1, epochs_till_now + epochs))    
+    print('\n===== EPOCH {}/{} ====='.format(epoch + 1, epochs_till_now + epochs))    
     print('\nTRAINING...')
     epoch_train_start_time = time.time()
     model.train()
@@ -189,3 +190,10 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
                            'val_epoch_loss': val_epoch_loss}, 
                 'epochs_till_now': epoch+1}, 
                 os.path.join(models_dir, 'model{}.pth'.format(str(epoch + 1).zfill(2))))
+
+total_script_time = time.time() - script_time
+m, s = divmod(total_script_time, 60)
+h, m = divmod(m, 60)
+print(f'\ntotal time taken for running this script: {int(h)} hrs {int(m)} mins {int(s)} secs')
+  
+print('\nFin.')
