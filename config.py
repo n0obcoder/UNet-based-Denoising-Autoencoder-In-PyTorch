@@ -18,18 +18,17 @@ debug_dir = 'debug'
 txt_file_dir = 'shitty_text.txt'
 
 # maximun number of synthetic words to generate
-num_synthetic_imgs = 24000
+num_synthetic_imgs = 18000
 train_percentage = 0.8
 
-resume = True      # False for trainig from scratch, True for loading a previously saved weight
-ckpt='model02.pth' # model file path to load the weights from, only useful when resume is True
-lr = 1e-5          # learning rate
-epochs = 2         # epochs to train for 
+resume = not True      # False for trainig from scratch, True for loading a previously saved weight
+ckpt='model12.pth' # model file path to load the weights from, only useful when resume is True
+lr = 3e-6          # learning rate
+epochs = 8         # epochs to train for 
 
 # batch size for train and val loaders
 batch_size = 64
 
-test = True # it saves the denoised images in the result dir
 test_dir = os.path.join(data_dir, val_dir, noisy_dir)
 res_dir = 'results'
-test_bs = 1
+test_bs = 64
