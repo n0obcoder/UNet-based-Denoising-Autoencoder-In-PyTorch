@@ -116,7 +116,7 @@ lr = cfg.lr
 optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr = lr)
 loss_fn = nn.MSELoss()
 
-log_interval = 25
+log_interval = cfg.log_interval
 epochs = cfg.epochs
 
 ###
