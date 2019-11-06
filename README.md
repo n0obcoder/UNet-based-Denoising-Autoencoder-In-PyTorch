@@ -3,6 +3,7 @@ Cleaning printed text using Denoising Autoencoder based on UNet architecture in 
 
 ## Requirements
 * torch >= 0.4    
+* torchvision >= 0.2.2
 * opencv-python    
 * numpy            
 * matplotlib       
