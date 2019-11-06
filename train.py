@@ -148,7 +148,7 @@ for epoch in range(epochs_till_now, epochs_till_now+epochs):
         if (batch_idx + 1)%log_interval == 0:
             batch_time = time.time() - batch_start_time
             m,s = divmod(batch_time, 60)
-            print('train loss @batch_idx {}/{}: {} in {} mins {} secs'.format(str(batch_idx+1).zfill(len(str(len(train_loader)))), len(train_loader), loss.item(), int(m), round(s, 2)))
+            print('train loss @batch_idx {}/{}: {} in {} mins {} secs (per batch)'.format(str(batch_idx+1).zfill(len(str(len(train_loader)))), len(train_loader), loss.item(), int(m), round(s, 2)))
 
     train_epoch_loss.append(np.array(running_train_loss).mean())
 
