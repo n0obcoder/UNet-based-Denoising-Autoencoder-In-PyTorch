@@ -17,8 +17,8 @@ class DAE_dataset(Dataset):
     
     def __getitem__(self, index):  
         # read images in grayscale, then invert them
-        img       = 255 - cv2.imread(self.imgs_data[index] ,0)
-        noisy_img = 255 - cv2.imread(self.noisy_imgs_data[index] ,0)
+        img       = cv2.imread(self.imgs_data[index] ,0)
+        noisy_img = cv2.imread(self.noisy_imgs_data[index] ,0)
     
         if self.transform is not None:            
             img = self.transform(img)             
