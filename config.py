@@ -14,6 +14,9 @@ imgs_dir = 'imgs'
 noisy_dir = 'noisy'
 debug_dir = 'debug'
 
+# depth of UNet 
+depth = 5 # try decreasing the depth value if there is a memory error
+
 # text file to get text from
 txt_file_dir = 'shitty_text.txt'
 
