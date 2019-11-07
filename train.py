@@ -87,7 +87,7 @@ print('\nlen(train_loader): {}  @bs={}'.format(len(train_loader), batch_size))
 print('len(val_loader)  : {}  @bs={}'.format(len(val_loader), batch_size))
 
 # defining the model
-model = UNet(n_classes = 1, depth = 5, padding = True).to(device) # try decreasing the depth value if there is a memory error
+model = UNet(n_classes = 1, depth = cfg.depth, padding = True).to(device) # try decreasing the depth value if there is a memory error
 
 resume = cfg.resume
 
