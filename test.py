@@ -27,7 +27,7 @@ print('\nlen(test_dataset) : {}'.format(len(test_dataset)))
 print('len(test_loader)  : {}  @bs={}'.format(len(test_loader), cfg.test_bs))
 
 # defining the model
-model = UNet(n_classes = 1, depth = 3, padding = True).to(device)
+model = UNet(n_classes = 1, depth = cfg.depth, padding = True).to(device)
 
 ckpt_path = os.path.join(cfg.models_dir, cfg.ckpt)
 ckpt = torch.load(ckpt_path)
