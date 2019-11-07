@@ -45,7 +45,7 @@ class custom_test_dataset(Dataset):
     
     def __getitem__(self, index):  
         # read images in grayscale, then invert them
-        img       = 255 - cv2.imread(self.imgs_data[index] ,0)
+        img       = cv2.imread(self.imgs_data[index] ,0)
                 
         # check if img height exceeds out_size height
         if img.shape[0] > self.out_size[0]:
