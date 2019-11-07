@@ -25,7 +25,7 @@ num_synthetic_imgs = 18000
 train_percentage = 0.8
 
 resume = not True  # False for trainig from scratch, True for loading a previously saved weight
-ckpt='model08.pth' # model file path to load the weights from, only useful when resume is True
+ckpt='model01.pth' # model file path to load the weights from, only useful when resume is True
 lr = 3e-6          # learning rate
 epochs = 3         # epochs to train for 
 
