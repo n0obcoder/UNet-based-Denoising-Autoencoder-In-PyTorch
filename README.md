@@ -37,6 +37,7 @@ python train.py
 
 ## Testing
 In *config.py*,
+* set **ckpt** to the path of the model to be loaded, i.e. ckpt = 'model02.pth'
 * set **test_dir** to the path that contains the noisy images that you need to denoise ('data/val/noisy' by default) 
 * set **test_bs** to the desired batch size for the test set (1 by default)
 ```
