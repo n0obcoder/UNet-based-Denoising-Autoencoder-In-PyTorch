@@ -67,3 +67,9 @@ Once the testing is done, the results will be saved in a directory named *result
     <img src='/results/res05.png' width='250' alt='res05.png' hspace='15'>
   </div>
 </div>
+
+## Acknowledgement
+The UNet architecture used here is borrowed from https://github.com/jvanvugt/pytorch-unet
+
+[NIH Chest X-ray Dataset](https://www.kaggle.com/nih-chest-xrays/data#Data_Entry_2017.csv) is used for  Multi-Label Disease Classification of of the Chest X-Rays.
+
