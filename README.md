@@ -35,6 +35,10 @@ In *config.py*,
 python train.py
 ```
 
+### Losses
+The model was trained for 12 epochs for the configuration mentioned in `config.py`
+<img src='/losses/losses_12.png' width='250' alt='loss after 12 epochs' hspace='15'>
+
 ## Testing
 In *config.py*,
 * set **ckpt** to the path of the model to be loaded, i.e. ckpt = 'model02.pth'
