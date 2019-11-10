@@ -37,7 +37,7 @@ python train.py
 
 ### Losses
 The model was trained for 12 epochs for the configuration mentioned in `config.py`
-<img src='/losses/losses_12.png' width='500' alt='loss after 12 epochs' hspace='35'>
+<img src='/losses/losses_12.png' width='750' alt='loss after 12 epochs' hspace='35'>
 
 ## Testing
 In *config.py*,
