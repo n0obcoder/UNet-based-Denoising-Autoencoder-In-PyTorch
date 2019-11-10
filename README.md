@@ -44,3 +44,16 @@ In *config.py*,
 python test.py
 ```
 Once the testing is done, the results will be saved in a directory named *results*
+
+## Results (Noisy and Denoised Image Pairs)
+<div class="row">
+  <div class="column">
+    <img src='/results/res01.png' width='250' alt='Atelectasis' hspace='15'>
+  </div>
+  <div class="column">
+    <img src=''/results/res02.png'' width='250' alt='Cardiomegaly | Edema | Effusion' hspace='15'>
+  </div>
+  <div class="column">
+    <img src='/results/res03.png' width='250' alt='No Finding' hspace='15'>
+  </div>
+</div>
