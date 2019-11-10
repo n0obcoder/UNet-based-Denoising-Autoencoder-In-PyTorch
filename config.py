@@ -26,8 +26,8 @@ train_percentage = 0.8
 
 resume = not True  # False for trainig from scratch, True for loading a previously saved weight
 ckpt='model01.pth' # model file path to load the weights from, only useful when resume is True
-lr = 3e-6          # learning rate
-epochs = 3         # epochs to train for 
+lr = 1e-5          # learning rate
+epochs = 12        # epochs to train for 
 
 # batch size for train and val loaders
 batch_size = 32 # try decreasing the batch_size if there is a memory error
