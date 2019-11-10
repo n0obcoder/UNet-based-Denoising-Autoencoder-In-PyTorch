@@ -47,10 +47,10 @@ Once the testing is done, the results will be saved in a directory named *result
 
 ## Results (Noisy and Denoised Image Pairs)
 <div class="row">
-  <div class="column">
+*  <div class="column">
     <img src='/results/res01.png' width='250' alt='res01.png' hspace='15'>
   </div>
-  <div class="column">
+* <div class="column">
     <img src='/results/res02.png' width='250' alt='res02.png' hspace='15'>
   </div>
   <div class="column">
