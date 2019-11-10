@@ -1,6 +1,10 @@
 # UNet-based-Denoising-Autoencoder-In-PyTorch
 Cleaning printed text using Denoising Autoencoder based on UNet architecture in PyTorch
 
+## Acknowledgement
+The UNet architecture used here is borrowed from https://github.com/jvanvugt/pytorch-unet.
+The only modification made in the UNet architecture mentioned in the above link is the addition of dropout layers.
+
 ## Requirements
 * torch >= 0.4    
 * torchvision >= 0.2.2
@@ -67,9 +71,3 @@ Once the testing is done, the results will be saved in a directory named *result
     <img src='/results/res05.png' width='250' alt='res05.png' hspace='15'>
   </div>
 </div>
-
-## Acknowledgement
-The UNet architecture used here is borrowed from https://github.com/jvanvugt/pytorch-unet
-
-[NIH Chest X-ray Dataset](https://www.kaggle.com/nih-chest-xrays/data#Data_Entry_2017.csv) is used for  Multi-Label Disease Classification of of the Chest X-Rays.
-
