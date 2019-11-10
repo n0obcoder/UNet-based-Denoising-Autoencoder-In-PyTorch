@@ -51,9 +51,15 @@ Once the testing is done, the results will be saved in a directory named *result
     <img src='/results/res01.png' width='250' alt='res01.png' hspace='15'>
   </div>
   <div class="column">
-    <img src=''/results/res02.png'' width='250' alt='res02.png' hspace='15'>
+    <img src='/results/res02.png' width='250' alt='res02.png' hspace='15'>
   </div>
   <div class="column">
     <img src='/results/res03.png' width='250' alt='res03.png' hspace='15'>
+  </div>
+    <div class="column">
+    <img src='/results/res04.png' width='250' alt='res04.png' hspace='15'>
+  </div>
+    <div class="column">
+    <img src='/results/res05.png' width='250' alt='res05.png' hspace='15'>
   </div>
 </div>
