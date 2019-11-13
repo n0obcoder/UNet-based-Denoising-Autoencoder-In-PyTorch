@@ -53,7 +53,7 @@ python test.py
 ```
 Once the testing is done, the results will be saved in a directory named *results*
 
-## Results Noisy {(Top) and Denoised (Bottom) Image Pairs)}
+## Results {Noisy (Top) and Denoised (Bottom) Image Pairs)}
 <div class="row">
 * <div class="column">
     <img src='/results/res01.png' width='250' alt='res01.png' hspace='15'>
